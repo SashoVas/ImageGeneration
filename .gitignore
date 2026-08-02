@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+data/
+MNIST/
+celeba/
+models/
+cifar-10-batches-py/
+cifar-10-python.tar.gz
+diffusion__best.pth
+vae.pth
+diffusion.ipynb
