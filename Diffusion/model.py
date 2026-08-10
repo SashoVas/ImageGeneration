@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 
 
 class EncoderBlock(torch.nn.Module):
@@ -140,19 +141,24 @@ class SelfAttention2d(torch.nn.Module):
         qkv = self.qkv(x)
         q, k, v = qkv.chunk(3, dim=1)
 
-        q = q.view(b, self.num_heads, self.head_dim, h * w)
-        k = k.view(b, self.num_heads, self.head_dim, h * w)
-        v = v.view(b, self.num_heads, self.head_dim, h * w)
+        # q = q.view(b, self.num_heads, self.head_dim, h * w)
+        # k = k.view(b, self.num_heads, self.head_dim, h * w)
+        # v = v.view(b, self.num_heads, self.head_dim, h * w)
 
         # q = q.permute(0, 1, 3, 2)
         # attn = torch.matmul(q, k) / (self.head_dim ** 0.5)
         # attn = torch.softmax(attn, dim=-1)
         # out = torch.matmul(attn, v.permute(0, 1, 3, 2))
-        out = torch.nn.functional.scaled_dot_product_attention(
-            q, k, v, attn_mask=None, dropout_p=0.0, is_causal=False)
-        out = out.permute(0, 1, 3, 2).contiguous()
-        out = out.view(b, c, h, w)
-
+        # out = torch.nn.functional.scaled_dot_product_attention(
+        #    q, k, v, attn_mask=None, dropout_p=0.0, is_causal=False)
+        # out = out.permute(0, 1, 3, 2).contiguous()
+        # out = out.view(b, c, h, w)
+        q = q.view(b, self.num_heads, self.head_dim, h *
+                   w).transpose(-1, -2)  # (b, heads, hw, head_dim)
+        k = k.view(b, self.num_heads, self.head_dim, h * w).transpose(-1, -2)
+        v = v.view(b, self.num_heads, self.head_dim, h * w).transpose(-1, -2)
+        out = F.scaled_dot_product_attention(q, k, v)
+        out = out.transpose(-1, -2).contiguous().view(b, c, h, w)
         out = self.proj(out)
         return out + residual
 
